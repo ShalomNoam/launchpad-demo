@@ -18,6 +18,7 @@ const App = (() => {
     const hash = location.hash.replace(/^#\/?/, '');
     const [screen, id] = hash.split('/');
     document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.screen === (screen || 'dashboard') || (screen === 'project' && a.dataset.screen === 'dashboard')));
+    document.body.classList.remove('list-screen');
 
     if (screen === 'project' && byId(id)) { renderProject(byId(id)); Chat.setContext('internal', id); }
     else if (screen === 'client' && byId(id)) { renderClient(byId(id)); Chat.setContext('client', id); }
@@ -37,6 +38,7 @@ const App = (() => {
     const alerts = computeAlerts(PROJECTS);
     const urgent = alerts.filter(a => a.level !== 'info');
 
+    document.body.classList.add('list-screen');
     view().innerHTML = `
       <section class="hero hero-slim">
         <div class="wrap">
@@ -100,8 +102,9 @@ const App = (() => {
 
   /* ================= מסך 2 (פתיחה): בחירת לקוח ================= */
   function renderClientList() {
+    document.body.classList.add('list-screen');
     view().innerHTML = `
-      <section class="hero hero-slim hero-ink">
+      <section class="hero hero-slim">
         <div class="wrap">
           <p class="eyebrow">תצוגת לקוח</p>
           <h1>איך הלקוח רואה את הפרויקט שלו.</h1>

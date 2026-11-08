@@ -426,8 +426,6 @@ select { width: auto; }
 /* ---------- מסכי פתיחה נקיים: רשימת לקוחות ---------- */
 .hero-slim { padding: 44px 0 40px; }
 .hero-slim h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); }
-.hero-ink { background: var(--ink); }
-.hero-ink::after { background: rgba(255,50,39,.18); }
 .hero-sub { margin-top: 14px; max-width: 560px; opacity: .85; font-size: 1.05rem; position: relative; z-index: 1; }
 .alerts-toggle {
   margin-top: 24px; display: inline-flex; align-items: center; gap: 12px; position: relative; z-index: 1;
@@ -442,6 +440,32 @@ select { width: auto; }
 
 .list-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
 .list-head h2 { font-size: 1.5rem; font-weight: 900; }
+
+/* מסכי רשימת הלקוחות: אדום מלא רק ב-hero, כרטיסים לבנים לסריקה מהירה, והכרטיס נצבע באדום רק במעבר עכבר. בהשראת richkid.co.il */
+body.list-screen .client-list { background: transparent; box-shadow: none; border-radius: 0; overflow: visible; display: grid; gap: 12px; }
+body.list-screen .client-list li + li { border-top: 0; }
+body.list-screen .client-row { background: #fff; border-radius: var(--r-lg); box-shadow: var(--shadow); transition: background .18s, color .18s, transform .18s, box-shadow .18s; }
+body.list-screen .row-health { background: var(--bg); color: var(--ink); padding: 6px 14px; border-radius: var(--pill); min-width: 0; }
+body.list-screen .row-health-green { background: var(--green-bg); color: var(--green); }
+body.list-screen .row-health-yellow { background: var(--yellow-bg); color: var(--yellow); }
+body.list-screen .row-health-red { background: var(--red-bg); color: var(--red); }
+body.list-screen .row-health-red i { box-shadow: none; }
+body.list-screen .row-health-red + .row-days b { color: var(--brand-ink); }
+@media (hover: hover) {
+  body.list-screen .client-row:hover, body.list-screen .client-row:focus-visible { background: var(--brand); color: #fff; transform: translateY(-2px); box-shadow: 0 12px 32px rgba(255,50,39,.3); }
+  body.list-screen .client-row:focus-visible { outline-color: var(--ink); }
+  body.list-screen .client-row:hover :is(.row-num, small), body.list-screen .client-row:focus-visible :is(.row-num, small) { color: var(--ink); }
+  body.list-screen .client-row:hover .row-avatar, body.list-screen .client-row:focus-visible .row-avatar { background: #fff; }
+  body.list-screen .client-row:hover .row-health, body.list-screen .client-row:focus-visible .row-health { background: #fff; }
+  body.list-screen .client-row:hover .row-health-red + .row-days b, body.list-screen .client-row:focus-visible .row-health-red + .row-days b { color: #fff; }
+  body.list-screen .client-row:hover .arrow-btn, body.list-screen .client-row:focus-visible .arrow-btn { background: #fff; }
+  body.list-screen .client-row:hover .arrow-btn svg, body.list-screen .client-row:focus-visible .arrow-btn svg { stroke: var(--ink); }
+}
+@media (max-width: 760px) {
+  body.list-screen .client-row { flex-wrap: wrap; }
+  body.list-screen .row-main { flex-basis: 100%; }
+  body.list-screen .row-meta { flex: 1; justify-content: space-between; }
+}
 .client-list { list-style: none; margin: 0; padding: 0; background: #fff; border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden; }
 .client-list li + li { border-top: 1px solid var(--line); }
 .client-row { display: flex; align-items: center; gap: 18px; padding: 20px 24px; text-decoration: none; transition: background .15s; }
