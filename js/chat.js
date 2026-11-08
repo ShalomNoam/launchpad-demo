@@ -50,7 +50,8 @@ const Chat = (() => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitText(); }
     });
     el.text.addEventListener('input', autoGrow);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) toggle(false); });
+    // כשמודאל פתוח, Esc סוגר רק אותו ולא את הצ'אט שמאחוריו
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && open && document.getElementById('modal').hidden) toggle(false); });
   }
 
   function autoGrow() { el.text.style.height = 'auto'; el.text.style.height = Math.min(el.text.scrollHeight, 120) + 'px'; }
@@ -110,6 +111,7 @@ const Chat = (() => {
       el.body.innerHTML = h.map((m, i) => msgHTML(m, i)).join('') + (busy ? typingHTML() : '');
       el.body.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copyMsg(+b.dataset.copy, b)));
       el.body.querySelectorAll('[data-retry]').forEach(b => b.addEventListener('click', retry));
+      el.body.querySelectorAll('[data-open-settings]').forEach(b => b.addEventListener('click', () => App.openSettings()));
       // תשובה חדשה: גוללים לתחילתה (כדי שמייל ארוך ייקרא מההתחלה). אחרת: לסוף.
       const last = el.body.lastElementChild;
       el.body.scrollTop = (!busy && last && !last.classList.contains('msg-user'))
@@ -117,7 +119,9 @@ const Chat = (() => {
     }
 
     // קיצורים לפי המסך (והמייל רק ללקוח אדום)
-    const list = SHORTCUTS[mode].filter(s => !s.onlyHealth || s.onlyHealth === p.health);
+    // הקיצור הדחוף ראשון, כדי שלא יוסתר בגלילה במסך קטן
+    const list = SHORTCUTS[mode].filter(s => !s.onlyHealth || s.onlyHealth === p.health)
+      .sort((a, b) => Number(!!b.onlyHealth) - Number(!!a.onlyHealth));
     el.shortcuts.innerHTML = list.map(s => `<button class="shortcut ${s.onlyHealth ? 'shortcut-hot' : ''}" data-sc="${s.id}" ${busy ? 'disabled' : ''}>${esc(s.label)}</button>`).join('');
     el.shortcuts.querySelectorAll('[data-sc]').forEach(b => b.addEventListener('click', () => {
       const s = list.find(x => x.id === b.dataset.sc);
@@ -129,7 +133,7 @@ const Chat = (() => {
   function msgHTML(m, i) {
     if (m.role === 'user') return `<div class="msg msg-user">${esc(m.content)}</div>`;
     if (m.role === 'error') return `<div class="msg msg-error" role="alert"><strong>משהו השתבש</strong><p>${esc(m.content)}</p>
-      <div class="msg-actions">${m.kind === 'auth' || m.kind === 'model' ? `<button class="link-btn" onclick="App.openSettings()">פתיחת ההגדרות</button>` : ''}<button class="link-btn" data-retry>לנסות שוב</button></div></div>`;
+      <div class="msg-actions">${m.kind === 'auth' || m.kind === 'model' ? `<button class="link-btn" data-open-settings>פתיחת ההגדרות</button>` : ''}<button class="link-btn" data-retry>לנסות שוב</button></div></div>`;
     return `<div class="msg msg-ai">${m.demo ? '<span class="msg-tag">תשובת דמו</span>' : ''}${m.note ? `<p class="msg-note">${esc(m.note)}</p>` : ''}${renderMarkdown(m.content)}
       <div class="msg-actions"><button class="link-btn" data-copy="${i}">העתקה</button></div></div>`;
   }

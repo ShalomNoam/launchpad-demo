@@ -20,11 +20,12 @@ const App = (() => {
     document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.screen === (screen || 'dashboard') || (screen === 'project' && a.dataset.screen === 'dashboard')));
     document.body.classList.remove('list-screen');
 
-    if (screen === 'project' && byId(id)) { renderProject(byId(id)); Chat.setContext('internal', id); }
-    else if (screen === 'client' && byId(id)) { renderClient(byId(id)); Chat.setContext('client', id); }
-    else if (screen === 'client') { renderClientList(); Chat.setContext('client', null, false); }
-    else if (screen === 'spec') { renderSpec(); Chat.setContext('internal', null, false); }
-    else { renderDashboard(); Chat.setContext('internal', null); }
+    const setTitle = t => { document.title = `${t} · Launchpad`; };
+    if (screen === 'project' && byId(id)) { setTitle(byId(id).name); renderProject(byId(id)); Chat.setContext('internal', id); }
+    else if (screen === 'client' && byId(id)) { setTitle(`${byId(id).name}: תצוגת לקוח`); renderClient(byId(id)); Chat.setContext('client', id); }
+    else if (screen === 'client') { setTitle('תצוגת לקוח'); renderClientList(); Chat.setContext('client', null, false); }
+    else if (screen === 'spec') { setTitle('אפיון הכלי'); renderSpec(); Chat.setContext('internal', null, false); }
+    else { setTitle('מרכז ניהול'); renderDashboard(); Chat.setContext('internal', null); }
     window.scrollTo(0, 0);
   }
 
@@ -37,6 +38,7 @@ const App = (() => {
   function renderDashboard() {
     const alerts = computeAlerts(PROJECTS);
     const urgent = alerts.filter(a => a.level !== 'info');
+    const info = alerts.filter(a => a.level === 'info');
 
     document.body.classList.add('list-screen');
     view().innerHTML = `
@@ -55,7 +57,9 @@ const App = (() => {
       <div class="wrap">
         <section class="alerts-panel" id="alerts-panel" ${alertsOpen ? '' : 'hidden'}>
           <p class="muted small">ההתראות מחושבות אוטומטית מהנתונים: ימים בלי קשר, תוכן באיחור מול תאריך העלייה, ופרויקטים שתקועים אצל גורם אחד.</p>
-          ${alerts.length ? `<ul class="alerts">${alerts.map(a => alertHTML(a, true)).join('')}</ul>` : '<p class="empty">אין התראות. יום טוב 🙂</p>'}
+          ${urgent.length ? `<ul class="alerts">${urgent.map(a => alertHTML(a, true)).join('')}</ul>` : ''}
+          ${info.length ? `<p class="alerts-sub">לידיעה, לא דחוף</p><ul class="alerts">${info.map(a => alertHTML(a, true)).join('')}</ul>` : ''}
+          ${alerts.length ? '' : '<p class="empty">אין התראות. יום טוב 🙂</p>'}
         </section>
 
         <section class="block">
@@ -152,6 +156,8 @@ const App = (() => {
           <div><span>קשר אחרון</span><b class="${-p.lastContact >= ALERT_RULES.noContactDays ? 'warn' : ''}">${relDay(p.lastContact)}</b><small>${esc(p.lastContactNote)}</small></div>
         </div>
 
+        <h2 class="sr-only">פרטי הפרויקט</h2>
+
         ${alerts.length ? `<ul class="alerts alerts-compact">${alerts.map(a => alertHTML(a, false)).join('')}</ul>` : ''}
 
         ${(portalApproved.length || portal.questions.length) ? `
@@ -180,7 +186,7 @@ const App = (() => {
                 <h3>סיכום שיחת האפיון <span class="muted small">(גולמי)</span></h3>
                 <button class="link-btn" id="extract">✨ חלץ משימות עם AI</button>
               </div>
-              <div class="raw">${esc(p.rawCallSummary).replace(/\n/g, '<br>')}</div>
+              <div class="raw" tabindex="0" role="region" aria-label="סיכום שיחת האפיון">${esc(p.rawCallSummary).replace(/\n/g, '<br>')}</div>
             </section>
 
             <section class="card">
@@ -357,7 +363,8 @@ const App = (() => {
         <li><strong>שפה בלי האשמות במסך הלקוח.</strong> עיכוב פנימי מוצג ללקוח פשוט כ"אנחנו כאן". את הבעיה פותרים מבפנים, ולא מגלגלים אותה ללקוח.</li>
         <li><strong>"מה מחכה ממך" בראש מסך הלקוח.</strong> זה הדבר שהכי משפיע על לוחות הזמנים, ולכן הוא הכי בולט, עם תאריכים. אישור בלחיצה ושאלה מהלקוח מופיעים מיד אצל מנהל הפרויקט.</li>
         <li><strong>תאריכים יחסיים להיום.</strong> כל תאריך שמור כ"בעוד X ימים", כך שבכל יום שפותחים את הדמו ההתראות נכונות.</li>
-        <li><strong>המפתח נשמר רק בדפדפן, ויש מצב דמו מסומן.</strong> לדמו זה מספיק. במוצר אמיתי המפתח והסינון היו רצים בשרת.</li>
+        <li><strong>המפתח והסינון רצים בשרת, ויש מצב דמו מסומן.</strong> בפריסה עם מפתח בשרת, הדפדפן שולח רק את מזהה הפרויקט והשאלה. בלי מפתח בשרת העוזר עונה בתשובות מוכנות, וגולש יכול להדביק מפתח אישי שנשמר רק בדפדפן שלו.</li>
+        <li><strong>מה הדמו לא מגן עליו, בכוונה.</strong> אין התחברות, ולכן כל הנתונים הבדויים, כולל ההערות הפנימיות, נטענים בדפדפן, ונקודת הקצה של העוזר פתוחה עם הגבלת קצב ותקרת הוצאה. במוצר אמיתי הנתונים הפנימיים היו מוגשים רק אחרי הזדהות והרשאה.</li>
       </ul>` },
 
     { title: 'שאלות שהייתי שואל על התהליך האמיתי בחברה', html: `
@@ -378,7 +385,7 @@ const App = (() => {
         <header class="doc-head">
           <p class="eyebrow-dark">מסמך אפיון</p>
           <h1>מרכז ניהול הקמה</h1>
-          <p class="muted">כלי לניהול פרויקטים מהרגע שהאפיון והעיצוב נסגרו ועד העלייה לאוויר. [שם] · ${esc(new Intl.DateTimeFormat('he-IL', { month: 'long', year: 'numeric' }).format(TODAY))}</p>
+          <p class="muted">כלי לניהול פרויקטים מהרגע שהאפיון והעיצוב נסגרו ועד העלייה לאוויר. נועם שלום · ${esc(new Intl.DateTimeFormat('he-IL', { month: 'long', year: 'numeric' }).format(TODAY))}</p>
         </header>
         ${SPEC_DOC.map((s, i) => `
           <section class="doc-sec">
@@ -390,15 +397,23 @@ const App = (() => {
   }
 
   /* ================= מודאל, הגדרות והודעות ================= */
+  let modalReturnFocus = null;
   function openModal(title, html) {
     const m = document.getElementById('modal');
+    if (m.hidden) modalReturnFocus = document.activeElement;
     m.querySelector('.modal-title').textContent = title;
     m.querySelector('.modal-body').innerHTML = html;
     m.hidden = false;
     m.querySelector('.modal-close').focus();
     return m.querySelector('.modal-body');
   }
-  function closeModal() { document.getElementById('modal').hidden = true; }
+  function closeModal() {
+    const m = document.getElementById('modal');
+    if (m.hidden) return;
+    m.hidden = true;
+    if (modalReturnFocus && modalReturnFocus.isConnected) modalReturnFocus.focus();
+    modalReturnFocus = null;
+  }
 
   function openSettings() {
     const body = openModal('הגדרות: חיבור ל-AI', `
